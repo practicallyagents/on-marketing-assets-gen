@@ -31,6 +31,16 @@ def save_image_prompts(prompts_json: str, tool_context: ToolContext) -> str:
             return "Error: each prompt entry must have idea_id, version, and prompt."
 
     tool_context.state[STATE_KEY_IMAGE_PROMPTS] = prompts
+
+    # Debug: print saved image prompts
+    print("\n" + "=" * 80)
+    print("[DEBUG] SAVED IMAGE PROMPTS:")
+    print("=" * 80)
+    for entry in prompts:
+        print(f"\n--- {entry['idea_id']} v{entry['version']} ---")
+        print(entry["prompt"])
+    print("=" * 80 + "\n")
+
     return f"Saved {len(prompts)} image prompts to state."
 
 

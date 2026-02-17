@@ -59,6 +59,18 @@ def inject_product_images(
     llm_request.contents.insert(0, reference_content)
     print(f"[inject_product_images] Injected {len(image_parts)} product image(s)")
 
+    # Debug: print all text prompts being sent to the image generation model
+    print("\n" + "=" * 80)
+    print("[DEBUG] IMAGE GENERATION PROMPTS:")
+    print("=" * 80)
+    for content in llm_request.contents:
+        for part in content.parts:
+            if part.text:
+                print(part.text)
+            elif part.inline_data:
+                print(f"  [inline image: {part.inline_data.mime_type}]")
+    print("=" * 80 + "\n")
+
     return None
 
 
