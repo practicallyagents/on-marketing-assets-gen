@@ -1,4 +1,4 @@
-.PHONY: setup index run web test clean help
+.PHONY: setup index run run-file web test clean help
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
@@ -12,6 +12,9 @@ index: ## Rebuild the product index from scraped data
 
 run: ## Run the agent pipeline in CLI mode
 	uv run adk run agents
+
+run-file: ## Run pipeline with a mood board file (usage: make run-file FILE=mood_boards/sample_mood_board.md)
+	uv run python run.py $(FILE)
 
 web: ## Start the ADK web UI (browser-based)
 	uv run adk web .
