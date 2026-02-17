@@ -5,6 +5,7 @@ description = "Instagram posts generator for On brand using Google ADK"
 requires-python = ">=3.11"
 dependencies = [
     "google-adk",
+    "pillow>=12.1.1",
     "pydantic",
 ]
 

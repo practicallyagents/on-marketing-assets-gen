@@ -6,17 +6,15 @@ from collections.abc import AsyncGenerator
 from google.adk.agents import BaseAgent, LlmAgent, SequentialAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event
-from google.genai import types
 
-from agents.assets_generator.callbacks import extract_images_to_state, inject_product_images
 from agents.assets_generator.retry_agent import RetryAgent
 from agents.assets_generator.tools import (
+    generate_image,
     save_all_assets,
     save_image_prompts,
 )
 from agents.shared.schemas import STATE_KEY_IDEAS, STATE_KEY_IMAGE_PROMPTS, STATE_KEY_IMAGE_RESULTS
 
-IMAGE_MODEL = os.environ.get("IMAGE_GENERATION_MODEL", "gemini-2.5-flash-image")
 TEXT_MODEL = os.environ.get("TEXT_GENERATION_MODEL", "gemini-2.5-flash")
 
 PROMPT_GENERATOR_INSTRUCTION = """\
@@ -34,15 +32,10 @@ IMPORTANT: Adhere to the instruction given in the "imagery_direction" field of c
 """
 
 IMAGE_GENERATOR_INSTRUCTION = """\
-You are an image generator. Generate exactly one image for the prompt below.
-The image should be square (1080x1080).
+You are an image generator assistant. Your job is to generate an image for the current prompt.
 
-Product reference photos are provided as input images. Use them as visual reference
-to accurately depict the product's real appearance, colors, shape, and details.
-
-## Prompt:
-
-{current_prompt}
+Call the `generate_image` tool to generate the image. It reads the prompt and product
+reference images from state automatically — you do not need to pass any arguments.
 """
 
 ASSET_SAVER_INSTRUCTION = """\
@@ -63,27 +56,11 @@ prompt_generator_agent = LlmAgent(
 
 image_generator_agent = LlmAgent(
     name="image_generator_agent",
-    model=IMAGE_MODEL,
-    description="Generates images from prompts using native image generation.",
+    model=TEXT_MODEL,
+    description="Generates images by calling the generate_image tool.",
     instruction=IMAGE_GENERATOR_INSTRUCTION,
-    tools=[],
+    tools=[generate_image],
     include_contents="none",
-    before_model_callback=inject_product_images,
-    after_model_callback=extract_images_to_state,
-    generate_content_config=types.GenerateContentConfig(
-        safety_settings=[
-            types.SafetySetting(
-                category=c, threshold=types.HarmBlockThreshold.BLOCK_NONE
-            )
-            for c in [
-                types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                types.HarmCategory.HARM_CATEGORY_HARASSMENT,
-                types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                types.HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
-            ]
-        ],
-    ),
 )
 
 image_generator_with_retry = RetryAgent(
