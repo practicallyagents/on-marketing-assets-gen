@@ -4,6 +4,8 @@ Instagram post generator for the On brand, built with [Google ADK](https://googl
 
 `./data` folder contains all publicly available data from On online catalogue which can be used for assets generation.
 
+> **Important:** To generate marketing assets, this project requires On's publicly available product catalog data placed in the `data/` folder at the project root. Without this data, the ideation agent cannot search for products and the pipeline will not produce results.
+
 Two agents chain together via a JSON contract:
 
 1. **Ideation Agent** — reads a mood board + searches the product catalog, outputs `ideas.json` with 3 post concepts
@@ -38,10 +40,19 @@ make clean    Remove generated output files
 
 ## Usage
 
-When the agent starts, tell it which mood board to use:
+You can run the pipeline in two ways:
 
+**CLI (non-interactive)** — pass a mood board file directly:
+
+```bash
+make run-file FILE=mood_boards/sample_mood_board.md
 ```
-Generate Instagram posts from mood_boards/sample_mood_board.md
+
+**Interactive mode** — start the agent and tell it which mood board to use:
+
+```bash
+make run
+# Then type: Generate Instagram posts from mood_boards/sample_mood_board.md
 ```
 
 The pipeline will:
