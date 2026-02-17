@@ -1,6 +1,7 @@
 """Callbacks for the Assets Generator sub-agents."""
 
 import base64
+import logging
 import mimetypes
 from pathlib import Path
 
@@ -10,6 +11,8 @@ from google.genai import types
 from google.genai.types import GenerateContentResponse
 
 from agents.shared.schemas import STATE_KEY_IMAGE_PROMPTS, STATE_KEY_IMAGE_RESULTS
+
+logger = logging.getLogger(__name__)
 
 
 def inject_product_images(
@@ -71,16 +74,35 @@ def extract_images_to_state(
     """
     prompts = callback_context.state.get(STATE_KEY_IMAGE_PROMPTS, [])
 
-    print("LLM response:")
-    print(llm_response)
+    # Log response metadata
+    candidates = getattr(llm_response, "candidates", None)
+    if candidates:
+        for i, candidate in enumerate(candidates):
+            finish_reason = getattr(candidate, "finish_reason", None)
+            safety_ratings = getattr(candidate, "safety_ratings", None)
+            logger.info(
+                "[extract_images_to_state] candidate %d: finish_reason=%s",
+                i,
+                finish_reason,
+            )
+            if safety_ratings:
+                for rating in safety_ratings:
+                    logger.info(
+                        "[extract_images_to_state]   safety: %s = %s",
+                        getattr(rating, "category", "?"),
+                        getattr(rating, "probability", "?"),
+                    )
 
     # Handle error/empty responses gracefully
     if not llm_response.content or not llm_response.content.parts:
         error_code = getattr(llm_response, "error_code", None)
         finish_reason = getattr(llm_response, "finish_reason", None)
-        print(
-            f"[extract_images_to_state] No content in response. "
-            f"finish_reason={finish_reason}, error_code={error_code}"
+        logger.warning(
+            "[extract_images_to_state] No content in response. "
+            "finish_reason=%s, error_code=%s, expected %d image(s)",
+            finish_reason,
+            error_code,
+            len(prompts),
         )
         return None
 

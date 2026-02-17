@@ -1,17 +1,22 @@
 """Assets Generator agent definition — iterates over each idea."""
 
+import os
 from collections.abc import AsyncGenerator
 
 from google.adk.agents import BaseAgent, LlmAgent, SequentialAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event
+from google.genai import types
 
 from agents.assets_generator.callbacks import extract_images_to_state, inject_product_images
+from agents.assets_generator.retry_agent import RetryAgent
 from agents.assets_generator.tools import (
     save_all_assets,
     save_image_prompts,
 )
 from agents.shared.schemas import STATE_KEY_IDEAS
+
+IMAGE_MODEL = os.environ.get("IMAGE_GENERATION_MODEL", "gemini-2.5-flash-image")
 
 PROMPT_GENERATOR_INSTRUCTION = """\
 You are a visual designer for On, the Swiss running and athletic brand.
@@ -71,13 +76,35 @@ prompt_generator_agent = LlmAgent(
 
 image_generator_agent = LlmAgent(
     name="image_generator_agent",
-    model="gemini-2.5-flash-image",
+    model=IMAGE_MODEL,
     description="Generates images from prompts using native image generation.",
     instruction=IMAGE_GENERATOR_INSTRUCTION,
     tools=[],
     include_contents="none",
     before_model_callback=inject_product_images,
     after_model_callback=extract_images_to_state,
+    generate_content_config=types.GenerateContentConfig(
+        safety_settings=[
+            types.SafetySetting(
+                category=c, threshold=types.HarmBlockThreshold.BLOCK_NONE
+            )
+            for c in [
+                types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                types.HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
+            ]
+        ],
+    ),
+)
+
+image_generator_with_retry = RetryAgent(
+    name="image_generator_with_retry",
+    description="Retries image generation on failure.",
+    sub_agents=[image_generator_agent],
+    max_retries=3,
+    base_delay=2.0,
 )
 
 asset_saver_agent = LlmAgent(
@@ -93,7 +120,7 @@ asset_saver_agent = LlmAgent(
 idea_pipeline = SequentialAgent(
     name="idea_pipeline",
     description="Processes a single idea: prompts, image generation, and saving.",
-    sub_agents=[prompt_generator_agent, image_generator_agent, asset_saver_agent],
+    sub_agents=[prompt_generator_agent, image_generator_with_retry, asset_saver_agent],
 )
 
 
