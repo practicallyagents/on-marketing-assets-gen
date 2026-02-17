@@ -71,21 +71,23 @@ def extract_images_to_state(
     """
     prompts = callback_context.state.get(STATE_KEY_IMAGE_PROMPTS, [])
 
-    image_results = []
-    image_index = 0
-
     print("LLM response:")
     print(llm_response)
 
-    parts = []
-    if llm_response.content and llm_response.content.parts:
-        parts = llm_response.content.parts
-    elif llm_response.candidates:
-        for candidate in llm_response.candidates:
-            if candidate.content and candidate.content.parts:
-                parts.extend(candidate.content.parts)
+    # Handle error/empty responses gracefully
+    if not llm_response.content or not llm_response.content.parts:
+        error_code = getattr(llm_response, "error_code", None)
+        finish_reason = getattr(llm_response, "finish_reason", None)
+        print(
+            f"[extract_images_to_state] No content in response. "
+            f"finish_reason={finish_reason}, error_code={error_code}"
+        )
+        return None
 
-    for part in parts:
+    image_results = []
+    image_index = 0
+
+    for part in llm_response.content.parts:
         if part.inline_data and part.inline_data.data:
             image_b64 = base64.b64encode(part.inline_data.data).decode("utf-8")
             if image_index < len(prompts):
