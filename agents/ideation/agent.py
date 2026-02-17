@@ -95,6 +95,7 @@ idea_generator = LlmAgent(
     description="Generates 3 Instagram post ideas from the mood board and product catalog.",
     instruction=IDEA_GENERATOR_INSTRUCTION,
     output_key="generated_ideas",
+    tools=[get_product_details],
 )
 
 # --- Step 4: Save ideas ---
