@@ -1,8 +1,12 @@
 """Ideation agent definition — sequential pipeline."""
 
+import os
+
 from google.adk.agents import LlmAgent, SequentialAgent
 
 from agents.ideation.tools import read_mood_board, search_products, get_product_details, save_ideas
+
+TEXT_MODEL = os.environ.get("TEXT_GENERATION_MODEL", "gemini-2.5-flash")
 
 # --- Step 1: Read the mood board ---
 
@@ -13,7 +17,7 @@ to load the mood board file. Return its full contents unchanged.
 
 mood_board_reader = LlmAgent(
     name="mood_board_reader",
-    model="gemini-2.5-flash",
+    model=TEXT_MODEL,
     description="Reads a mood board markdown file.",
     instruction=MOOD_BOARD_READER_INSTRUCTION,
     tools=[read_mood_board],
@@ -37,7 +41,7 @@ codes like "1WE30701756"). If you find any return an array of SKU codes.
 
 product_searcher = LlmAgent(
     name="product_searcher",
-    model="gemini-2.5-flash",
+    model=TEXT_MODEL,
     description="Searches the On product catalog for products matching the mood board.",
     instruction=PRODUCT_SEARCHER_INSTRUCTION,
     tools=[search_products, get_product_details],
@@ -91,7 +95,7 @@ Return ONLY the JSON, no other text.
 
 idea_generator = LlmAgent(
     name="idea_generator",
-    model="gemini-2.5-flash",
+    model=TEXT_MODEL,
     description="Generates 3 Instagram post ideas from the mood board and product catalog.",
     instruction=IDEA_GENERATOR_INSTRUCTION,
     output_key="generated_ideas",
@@ -111,7 +115,7 @@ Use `save_ideas` to save this JSON. Pass the JSON string exactly as-is to the to
 
 idea_saver = LlmAgent(
     name="idea_saver",
-    model="gemini-2.5-flash",
+    model=TEXT_MODEL,
     description="Validates and saves the generated post ideas.",
     instruction=IDEA_SAVER_INSTRUCTION,
     tools=[save_ideas],

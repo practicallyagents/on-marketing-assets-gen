@@ -17,6 +17,7 @@ from agents.assets_generator.tools import (
 from agents.shared.schemas import STATE_KEY_IDEAS
 
 IMAGE_MODEL = os.environ.get("IMAGE_GENERATION_MODEL", "gemini-2.5-flash-image")
+TEXT_MODEL = os.environ.get("TEXT_GENERATION_MODEL", "gemini-2.5-flash")
 
 PROMPT_GENERATOR_INSTRUCTION = """\
 You are a visual designer for On, the Swiss running and athletic brand.
@@ -67,7 +68,7 @@ Report the results when done.
 
 prompt_generator_agent = LlmAgent(
     name="prompt_generator_agent",
-    model="gemini-2.5-flash",
+    model=TEXT_MODEL,
     description="Creates detailed image generation prompts for the current idea.",
     instruction=PROMPT_GENERATOR_INSTRUCTION,
     tools=[save_image_prompts],
@@ -109,7 +110,7 @@ image_generator_with_retry = RetryAgent(
 
 asset_saver_agent = LlmAgent(
     name="asset_saver_agent",
-    model="gemini-2.5-flash",
+    model=TEXT_MODEL,
     description="Saves generated image assets to disk.",
     instruction=ASSET_SAVER_INSTRUCTION,
     tools=[save_all_assets],

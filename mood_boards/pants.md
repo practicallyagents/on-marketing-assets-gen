@@ -6,7 +6,8 @@ I want some happy vibes, no matter of gear you can have fun!
 
 Keywords: rainbow, finish line, dogs, coffee
 
-All ideas have to be lif situations or race or trail running.
+All ideas have to be life situations or race or trail running.
+All images have to include a dog and coffee.
 
 Make sure to use characters, gear found on product images.
 
