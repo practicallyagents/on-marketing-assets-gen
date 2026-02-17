@@ -20,10 +20,9 @@ Your job is to create detailed image generation prompts for an Instagram post.
 ## Your workflow:
 
 1. Read the current idea from state key `current_idea`.
-2. For this idea, craft 3 detailed image generation prompts:
+2. For this idea, craft 3 detailed image generation prompts considering product images, imagery direction and the idea. Some directions you can use:
    - Version 1: Product-focused hero shot
    - Version 2: Lifestyle/action shot with the product
-   - Version 3: Artistic/mood-driven composition
 3. Each prompt should describe the image in detail, referencing:
    - The product's appearance and key features
    - On's brand aesthetic: clean, minimal, athletic, premium
