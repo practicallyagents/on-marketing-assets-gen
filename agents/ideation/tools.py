@@ -39,10 +39,24 @@ def _extract_category_from_url(url: str) -> str:
     return "other"
 
 
+def _resolve_local_assets(data: dict) -> list[str]:
+    """Resolve localAssets to absolute paths, filtering to files that exist."""
+    assets = []
+    for asset in data.get("localAssets", {}).get("assets", []):
+        local_path = asset.get("localPath", "")
+        if local_path:
+            abs_path = PRODUCTS_DIR / local_path
+            if abs_path.exists():
+                assets.append(str(abs_path))
+    return assets
+
+
 def _extract_products_from_file(filepath: str) -> list[dict]:
     """Extract product variants from a single product file."""
     with open(filepath) as f:
         data = json.load(f)
+
+    local_assets = _resolve_local_assets(data)
 
     products = []
     json_ld = data.get("structuredData", {}).get("jsonLd", [])
@@ -80,6 +94,7 @@ def _extract_products_from_file(filepath: str) -> list[dict]:
                         "image_url": variant.get("image", ""),
                         "product_url": product_url,
                         "category": _extract_category_from_url(product_url),
+                        "local_assets": local_assets,
                     })
 
     # Fallback: if no structured data, try content fields
@@ -107,6 +122,7 @@ def _extract_products_from_file(filepath: str) -> list[dict]:
                     "image_url": "",
                     "product_url": url,
                     "category": _extract_category_from_url(url),
+                    "local_assets": local_assets,
                 })
 
     return products
@@ -214,6 +230,37 @@ def search_products(query: str) -> str:
             result["related_collections"] = matching_collections
 
     return json.dumps(result, indent=2)
+
+
+def get_product_details(sku: str) -> str:
+    """Looks up a single product by its SKU code and returns its details.
+
+    Use this when the mood board references a specific SKU code. This provides
+    more accurate results than keyword search for known products.
+
+    Args:
+        sku: A single SKU code (e.g. "1WE30701756").
+
+    Returns:
+        JSON string with product name, description, sku, and local asset paths.
+    """
+    sku_index = _load_sku_index()
+    rel_path = sku_index.get(sku)
+    if rel_path is None:
+        return json.dumps({"error": f"SKU not found: {sku}"})
+
+    filepath = str(PROJECT_ROOT / rel_path)
+    products = _extract_products_from_file(filepath)
+    matched = next((p for p in products if p["sku"] == sku), None)
+    if matched is None:
+        return json.dumps({"error": f"SKU not found: {sku}"})
+
+    return json.dumps({
+        "name": matched["name"],
+        "description": matched["description"],
+        "sku": matched["sku"],
+        "local_assets": matched.get("local_assets", []),
+    }, indent=2)
 
 
 def save_ideas(ideas_json: str, tool_context: ToolContext) -> str:
