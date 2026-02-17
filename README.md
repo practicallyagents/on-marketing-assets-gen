@@ -11,6 +11,31 @@ Two agents chain together via a JSON contract:
 1. **Ideation Agent** — reads a mood board + searches the product catalog, outputs `ideas.json` with 3 post concepts
 2. **Assets Generator Agent** — takes each idea, generates 3 image variations per idea (9 images total) using Gemini native image generation
 
+## Prerequisites
+
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) package manager
+- A `GOOGLE_API_KEY` (see `.env.example`)
+
+## Data setup
+
+The pipeline requires On's publicly available product catalog data. To populate it:
+
+1. Scrape or obtain the public On catalog data (product pages, collections, stories, etc.)
+2. Place the JSON files under `data/` following the directory structure:
+   ```
+   data/
+     products/       # ~3500 product JSON files
+     collections/    # ~43 collection JSONs
+     pages/          # ~723 static page JSONs
+     stories/        # ~436 editorial content JSONs
+   ```
+3. Build the product index (maps SKUs to file paths):
+   ```bash
+   make index
+   ```
+   This runs `scripts/build_product_index.py` and writes `data/product_index.json` — the sole data source the ideation agent searches at runtime.
+
 ## Quick start
 
 ```bash
