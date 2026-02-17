@@ -6,7 +6,7 @@ from google.adk.agents import BaseAgent, LlmAgent, SequentialAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event
 
-from agents.assets_generator.callbacks import extract_images_to_state
+from agents.assets_generator.callbacks import extract_images_to_state, inject_product_images
 from agents.assets_generator.tools import (
     save_all_assets,
     save_image_prompts,
@@ -31,6 +31,9 @@ Your job is to create detailed image generation prompts for an Instagram post.
    - Square 1080x1080 Instagram format
    - On brand colors: black, white, and accent colors from the product
    - Natural lighting, outdoor/urban settings
+   Note: The image generator will receive the actual product photos as visual
+   reference, so your prompts can instruct it to match the real product's
+   colors, shapes, and details faithfully.
 4. Use `save_image_prompts` to save the 3 prompts as a JSON array.
    Each entry must have: idea_id (str), version (int 1-3), prompt (str).
 
@@ -42,6 +45,9 @@ Your job is to create detailed image generation prompts for an Instagram post.
 IMAGE_GENERATOR_INSTRUCTION = """\
 You are an image generator. Generate one image for each of the prompts below.
 Generate all images in a single response. Each image should be square (1080x1080).
+
+Product reference photos are provided as input images. Use them as visual reference
+to accurately depict the product's real appearance, colors, shape, and details.
 
 ## Prompts:
 
@@ -71,6 +77,7 @@ image_generator_agent = LlmAgent(
     instruction=IMAGE_GENERATOR_INSTRUCTION,
     tools=[],
     include_contents="none",
+    before_model_callback=inject_product_images,
     after_model_callback=extract_images_to_state,
 )
 

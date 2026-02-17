@@ -1,11 +1,62 @@
 """Callbacks for the Assets Generator sub-agents."""
 
 import base64
+import mimetypes
+from pathlib import Path
 
 from google.adk.agents.callback_context import CallbackContext
+from google.adk.models.llm_request import LlmRequest
+from google.genai import types
 from google.genai.types import GenerateContentResponse
 
 from agents.shared.schemas import STATE_KEY_IMAGE_PROMPTS, STATE_KEY_IMAGE_RESULTS
+
+
+def inject_product_images(
+    callback_context: CallbackContext, llm_request: LlmRequest
+) -> None:
+    """before_model_callback for image_generator_agent.
+
+    Reads the current idea's product_image_urls from state, loads each image
+    file from disk, and prepends them as inline_data parts to the LLM request
+    so the image generation model can use them as visual reference.
+    """
+    current_idea = callback_context.state.get("current_idea", {})
+    image_paths = current_idea.get("product_image_urls", [])
+
+    if not image_paths:
+        return None
+
+    image_parts = []
+    for path_str in image_paths:
+        path = Path(path_str)
+        if not path.is_file():
+            print(f"[inject_product_images] Skipping missing file: {path_str}")
+            continue
+
+        mime_type, _ = mimetypes.guess_type(path_str)
+        if not mime_type or not mime_type.startswith("image/"):
+            mime_type = "image/jpeg"
+
+        image_data = path.read_bytes()
+        image_parts.append(
+            types.Part(inline_data=types.Blob(mime_type=mime_type, data=image_data))
+        )
+        print(f"[inject_product_images] Loaded {path.name} ({mime_type})")
+
+    if not image_parts:
+        return None
+
+    text_part = types.Part(
+        text="Here are the product reference photos — use these as visual reference for accurate product appearance:"
+    )
+    reference_content = types.Content(
+        role="user", parts=[text_part, *image_parts]
+    )
+    llm_request.contents.insert(0, reference_content)
+    print(f"[inject_product_images] Injected {len(image_parts)} product image(s)")
+
+    return None
 
 
 def extract_images_to_state(
@@ -22,6 +73,9 @@ def extract_images_to_state(
 
     image_results = []
     image_index = 0
+
+    print("LLM response:")
+    print(llm_response)
 
     parts = []
     if llm_response.content and llm_response.content.parts:
