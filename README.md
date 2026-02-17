@@ -75,6 +75,64 @@ Campaign description, creative direction, and any constraints.
 The product SKUs: [1WE30701756, 1WD10570462, 1WF11290069]
 ```
 
+## Sample generations
+
+Below are example outputs from running the pipeline against the `mood_boards/pants.md` mood board.
+
+### Ideas (output/ideas.json)
+
+```json
+{
+  "mood_board_source": "mood_boards/pants.md",
+  "generated_at": "2026-02-17T20:45:49.719354+00:00",
+  "ideas": [
+    {
+      "id": "idea_1",
+      "product_name": "Women's Weather Vest White | Black",
+      "product_sku": "1WD10570462",
+      "imagery_direction": "A bustling city street during a marathon, transformed into a 'street race' scene. Runners are nearing a 'finish line' that radiates an ethereal, otherworldly glow...",
+      "headline": "Cross the Cosmos, Conquer the Finish Line.",
+      "post_description": "Zurich Marathon 2026: It's more than a race, it's a journey to the stars...",
+      "mood": "Triumphant, euphoric, dreamlike"
+    },
+    {
+      "id": "idea_2",
+      "product_name": "Women's Open Club Pants Crater",
+      "product_sku": "1WE30701756",
+      "imagery_direction": "An urban park or pedestrian area, depicting a relaxed 'life situation'. Runners are jogging effortlessly, exhibiting a state of partial weightlessness...",
+      "headline": "Elevate Your Every Run. Literally.",
+      "post_description": "Who said running had to be grounded? Experience the ultimate liberation on your next coffee run...",
+      "mood": "Playful, liberating, serene yet whimsical"
+    },
+    {
+      "id": "idea_3",
+      "product_name": "Women's Open Club Pants Crater",
+      "product_sku": "1WE30701756",
+      "imagery_direction": "A quiet, atmospheric city street just before dawn, blending a 'life situation' with the anticipation of a 'street race'...",
+      "headline": "Dawn of a New Dimension: Your Marathon Awaits.",
+      "post_description": "Before the race, before the crowd, there's just you, the city, and a whisper from beyond...",
+      "mood": "Intriguing, inspiring, calming, wonder-filled"
+    }
+  ]
+}
+```
+
+### Generated images
+
+**Idea 1** — "Cross the Cosmos, Conquer the Finish Line."
+
+![Idea 1 variation 1](sample_generations/idea_1_v1.png)
+
+**Idea 2** — "Elevate Your Every Run. Literally."
+
+![Idea 2 variation 1](sample_generations/idea_2_v1.png)
+
+**Idea 3** — "Dawn of a New Dimension: Your Marathon Awaits."
+
+| Variation 1 | Variation 2 |
+|---|---|
+| ![Idea 3 v1](sample_generations/idea_3_v1.png) | ![Idea 3 v2](sample_generations/idea_3_v2.png) |
+
 ## Project structure
 
 ```
