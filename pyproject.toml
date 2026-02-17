@@ -1,0 +1,21 @@
+[project]
+name = "on-marketing-assets-gen"
+version = "0.1.0"
+description = "Instagram posts generator for On brand using Google ADK"
+requires-python = ">=3.11"
+dependencies = [
+    "google-adk",
+    "pydantic",
+]
+
+[tool.setuptools.packages.find]
+include = ["agents*", "scripts*"]
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

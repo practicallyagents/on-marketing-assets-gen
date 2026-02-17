@@ -1,0 +1,12 @@
+*.log
+.env
+__pycache__/
+output/
+*.pyc
+.venv/
+data/product_index.json
+
+data/
+
+agents/.adk
+on_marketing_assets_gen.egg-info/
