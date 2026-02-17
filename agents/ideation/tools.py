@@ -103,7 +103,6 @@ def save_ideas(ideas_json: str, tool_context: ToolContext) -> str:
     The ideas_json must be a valid JSON string matching the IdeasOutput schema:
     {
         "mood_board_source": "path to mood board",
-        "generated_at": "ISO timestamp",
         "ideas": [
             {
                 "id": "unique id",
@@ -127,6 +126,7 @@ def save_ideas(ideas_json: str, tool_context: ToolContext) -> str:
     from agents.shared.schemas import IdeasOutput, STATE_KEY_IDEAS
 
     data = json.loads(ideas_json)
+    data["generated_at"] = datetime.now(timezone.utc).isoformat()
     # Validate against schema
     validated = IdeasOutput(**data)
     validated_dict = validated.model_dump()
