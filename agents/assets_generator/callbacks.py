@@ -23,26 +23,27 @@ def extract_images_to_state(
     image_results = []
     image_index = 0
 
-    print("response")
-    print(llm_response)
-
-    if llm_response.candidates:
+    parts = []
+    if llm_response.content and llm_response.content.parts:
+        parts = llm_response.content.parts
+    elif llm_response.candidates:
         for candidate in llm_response.candidates:
-            if not candidate.content or not candidate.content.parts:
-                continue
-            for part in candidate.content.parts:
-                if part.inline_data and part.inline_data.data:
-                    image_b64 = base64.b64encode(part.inline_data.data).decode("utf-8")
-                    if image_index < len(prompts):
-                        prompt_entry = prompts[image_index]
-                        image_results.append(
-                            {
-                                "idea_id": prompt_entry["idea_id"],
-                                "version": prompt_entry["version"],
-                                "image_base64": image_b64,
-                            }
-                        )
-                    image_index += 1
+            if candidate.content and candidate.content.parts:
+                parts.extend(candidate.content.parts)
+
+    for part in parts:
+        if part.inline_data and part.inline_data.data:
+            image_b64 = base64.b64encode(part.inline_data.data).decode("utf-8")
+            if image_index < len(prompts):
+                prompt_entry = prompts[image_index]
+                image_results.append(
+                    {
+                        "idea_id": prompt_entry["idea_id"],
+                        "version": prompt_entry["version"],
+                        "image_base64": image_b64,
+                    }
+                )
+            image_index += 1
 
     if image_results:
         callback_context.state[STATE_KEY_IMAGE_RESULTS] = image_results
