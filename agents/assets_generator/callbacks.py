@@ -10,7 +10,7 @@ from google.adk.models.llm_request import LlmRequest
 from google.genai import types
 from google.genai.types import GenerateContentResponse
 
-from agents.shared.schemas import STATE_KEY_IMAGE_PROMPTS, STATE_KEY_IMAGE_RESULTS
+from agents.shared.schemas import STATE_KEY_IMAGE_RESULTS
 
 logger = logging.getLogger(__name__)
 
@@ -79,12 +79,11 @@ def extract_images_to_state(
 ) -> None:
     """after_model_callback for image_generator_agent.
 
-    Iterates over the model response parts, finds inline_data parts
-    (generated images), base64-encodes them, maps each to the corresponding
-    prompt entry by index, and stores the list in state["image_results"].
-    Returns None so the original LLM response is preserved.
+    Extracts a single generated image from the model response, base64-encodes it,
+    maps it to the current_prompt entry, and stores as a single-item list in
+    state["image_results"]. Returns None so the original LLM response is preserved.
     """
-    prompts = callback_context.state.get(STATE_KEY_IMAGE_PROMPTS, [])
+    current_prompt = callback_context.state.get("current_prompt", {})
 
     # Log response metadata
     candidates = getattr(llm_response, "candidates", None)
@@ -111,31 +110,24 @@ def extract_images_to_state(
         finish_reason = getattr(llm_response, "finish_reason", None)
         logger.warning(
             "[extract_images_to_state] No content in response. "
-            "finish_reason=%s, error_code=%s, expected %d image(s)",
+            "finish_reason=%s, error_code=%s, expected 1 image",
             finish_reason,
             error_code,
-            len(prompts),
         )
         return None
 
-    image_results = []
-    image_index = 0
-
+    # Find the first generated image in the response
     for part in llm_response.content.parts:
         if part.inline_data and part.inline_data.data:
             image_b64 = base64.b64encode(part.inline_data.data).decode("utf-8")
-            if image_index < len(prompts):
-                prompt_entry = prompts[image_index]
-                image_results.append(
-                    {
-                        "idea_id": prompt_entry["idea_id"],
-                        "version": prompt_entry["version"],
-                        "image_base64": image_b64,
-                    }
-                )
-            image_index += 1
+            callback_context.state[STATE_KEY_IMAGE_RESULTS] = [
+                {
+                    "idea_id": current_prompt.get("idea_id", ""),
+                    "version": current_prompt.get("version", 0),
+                    "image_base64": image_b64,
+                }
+            ]
+            return None
 
-    if image_results:
-        callback_context.state[STATE_KEY_IMAGE_RESULTS] = image_results
-
+    logger.warning("[extract_images_to_state] No image found in response parts.")
     return None

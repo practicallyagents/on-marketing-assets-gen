@@ -1,15 +1,15 @@
 # Campaing for marathon campain
 
-Let's make a campaign for upcomming Boston Marathon 2026.
+Let's make a campaign for upcomming Zurich Marathon 2026.
 
 I want some happy vibes, no matter of gear you can have fun!
-
-Keywords: rainbow, finish line, dogs, coffee
-
-All ideas have to be life situations or race or trail running.
-All images have to include a dog and coffee.
-
 Go nuts, make the images crazy, unpredictable, thought provoking!
+
+Keywords to include in the ideas: space, finish line, UFO.
+
+All ideas have to be life situations or street race.
+All images have to include a dog and coffee.
+All images scenes MUST be lifestle photos.
 
 Make sure to use characters, gear found on product images.
 

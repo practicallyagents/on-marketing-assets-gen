@@ -14,7 +14,7 @@ from agents.assets_generator.tools import (
     save_all_assets,
     save_image_prompts,
 )
-from agents.shared.schemas import STATE_KEY_IDEAS
+from agents.shared.schemas import STATE_KEY_IDEAS, STATE_KEY_IMAGE_PROMPTS, STATE_KEY_IMAGE_RESULTS
 
 IMAGE_MODEL = os.environ.get("IMAGE_GENERATION_MODEL", "gemini-2.5-flash-image")
 TEXT_MODEL = os.environ.get("TEXT_GENERATION_MODEL", "gemini-2.5-flash")
@@ -23,20 +23,10 @@ PROMPT_GENERATOR_INSTRUCTION = """\
 You are a visual designer for On, the Swiss running and athletic brand.
 Your job is to create detailed image generation prompts for an Instagram post.
 
-## Your workflow:
-
 1. Read the current idea from state key `current_idea`.
 2. For this idea, craft 3 detailed image generation prompts considering "imagery_direction" field of current idea.
-3. Each prompt should describe the image in detail, referencing:
-   - On's brand aesthetic: clean, minimal, athletic, premium
-   - The idea's imagery_direction and mood
-   - Square 1080x1080 Instagram format
-   - On brand colors: black, white, and accent colors from the product
-   Note: The image generator will receive the actual product photos as visual
-   reference, so your prompts can instruct it to match the real product's
-   colors, shapes, and details faithfully.
-4. Use `save_image_prompts` to save the 3 prompts as a JSON array.
-   Each entry must have: idea_id (str), version (int 1-3), prompt (str).
+
+IMPORTANT: Adhere to the instruction given in the "imagery_direction" field of current idea!
 
 ## Current idea:
 
@@ -44,15 +34,15 @@ Your job is to create detailed image generation prompts for an Instagram post.
 """
 
 IMAGE_GENERATOR_INSTRUCTION = """\
-You are an image generator. Generate one image for each of the prompts below.
-Generate all images in a single response. Each image should be square (1080x1080).
+You are an image generator. Generate exactly one image for the prompt below.
+The image should be square (1080x1080).
 
 Product reference photos are provided as input images. Use them as visual reference
 to accurately depict the product's real appearance, colors, shape, and details.
 
-## Prompts:
+## Prompt:
 
-{image_prompts}
+{current_prompt}
 """
 
 ASSET_SAVER_INSTRUCTION = """\
@@ -113,11 +103,48 @@ asset_saver_agent = LlmAgent(
     include_contents="none",
 )
 
+
+class ForEachPromptAgent(BaseAgent):
+    """Iterates over image prompts from state and runs sub-agents for each one."""
+
+    async def _run_async_impl(
+        self, ctx: InvocationContext
+    ) -> AsyncGenerator[Event, None]:
+        prompts = ctx.session.state.get(STATE_KEY_IMAGE_PROMPTS, [])
+        accumulated_results: list[dict] = []
+
+        for prompt_entry in prompts:
+            # Set single prompt for image generator
+            ctx.session.state["current_prompt"] = prompt_entry
+            # Clear results so RetryAgent can detect fresh success/failure
+            ctx.session.state.pop(STATE_KEY_IMAGE_RESULTS, None)
+
+            for sub_agent in self.sub_agents:
+                async for event in sub_agent.run_async(ctx):
+                    yield event
+
+            # Collect the single result produced by image generator
+            results = ctx.session.state.get(STATE_KEY_IMAGE_RESULTS, [])
+            if results:
+                accumulated_results.append(results[0])
+
+        # Store all accumulated results so asset_saver_agent works unchanged
+        ctx.session.state[STATE_KEY_IMAGE_RESULTS] = accumulated_results
+
+
 # Inner pipeline that processes a single idea
 idea_pipeline = SequentialAgent(
     name="idea_pipeline",
     description="Processes a single idea: prompts, image generation, and saving.",
-    sub_agents=[prompt_generator_agent, image_generator_with_retry, asset_saver_agent],
+    sub_agents=[
+        prompt_generator_agent,
+        ForEachPromptAgent(
+            name="for_each_prompt",
+            description="Iterates over image prompts one by one.",
+            sub_agents=[image_generator_with_retry],
+        ),
+        asset_saver_agent,
+    ],
 )
 
 
