@@ -109,34 +109,34 @@ Below are example outputs from running the pipeline against the `mood_boards/pan
 ```json
 {
   "mood_board_source": "mood_boards/pants.md",
-  "generated_at": "2026-02-17T20:45:49.719354+00:00",
+  "generated_at": "2026-02-17T22:04:48.474644+00:00",
   "ideas": [
     {
       "id": "idea_1",
-      "product_name": "Women's Weather Vest White | Black",
-      "product_sku": "1WD10570462",
-      "imagery_direction": "A bustling city street during a marathon, transformed into a 'street race' scene. Runners are nearing a 'finish line' that radiates an ethereal, otherworldly glow...",
-      "headline": "Cross the Cosmos, Conquer the Finish Line.",
-      "post_description": "Zurich Marathon 2026: It's more than a race, it's a journey to the stars...",
-      "mood": "Triumphant, euphoric, dreamlike"
+      "product_name": "Women's Open Club Pants Crater",
+      "product_sku": "1WE30701756",
+      "imagery_direction": "A runner, mid-stride and radiating athleticism, is wearing the 'Women's Open Club Pants Crater' in a surreal, urban marathon setting...",
+      "headline": "Marathon Morning, Cosmic Mood.",
+      "post_description": "Who says sweatpants can't win races? Push your limits and embrace the unexpected...",
+      "mood": "Happy, energetic, irreverent"
     },
     {
       "id": "idea_2",
-      "product_name": "Women's Open Club Pants Crater",
-      "product_sku": "1WE30701756",
-      "imagery_direction": "An urban park or pedestrian area, depicting a relaxed 'life situation'. Runners are jogging effortlessly, exhibiting a state of partial weightlessness...",
-      "headline": "Elevate Your Every Run. Literally.",
-      "post_description": "Who said running had to be grounded? Experience the ultimate liberation on your next coffee run...",
-      "mood": "Playful, liberating, serene yet whimsical"
+      "product_name": "Women's Weather Vest White | Black",
+      "product_sku": "1WD10570462",
+      "imagery_direction": "A runner in the 'Women's Weather Vest White | Black' is captured sprinting through a fantastical, slightly chilly street race...",
+      "headline": "Out of This World Run.",
+      "post_description": "Weather or not, the universe is calling! Our Weather Vest keeps you agile and warm, no matter how wild your run gets...",
+      "mood": "Happy, energetic, irreverent"
     },
     {
       "id": "idea_3",
-      "product_name": "Women's Open Club Pants Crater",
-      "product_sku": "1WE30701756",
-      "imagery_direction": "A quiet, atmospheric city street just before dawn, blending a 'life situation' with the anticipation of a 'street race'...",
-      "headline": "Dawn of a New Dimension: Your Marathon Awaits.",
-      "post_description": "Before the race, before the crowd, there's just you, the city, and a whisper from beyond...",
-      "mood": "Intriguing, inspiring, calming, wonder-filled"
+      "product_name": "Women's Court Skirt Side Pleat White",
+      "product_sku": "1WF11290069",
+      "imagery_direction": "A runner wearing the 'Women's Court Skirt Side Pleat White' is depicted in a dynamic, mid-air leap, as if playfully bounding over an invisible obstacle...",
+      "headline": "Leap into the Laps of Joy.",
+      "post_description": "Skirt the ordinary, embrace the extraordinary! The Zurich Marathon 2026 is an open invitation to run, leap, and defy gravity...",
+      "mood": "Happy, energetic, irreverent"
     }
   ]
 }
@@ -144,15 +144,15 @@ Below are example outputs from running the pipeline against the `mood_boards/pan
 
 ### Generated images
 
-**Idea 1** — "Cross the Cosmos, Conquer the Finish Line."
+**Idea 1** — "Marathon Morning, Cosmic Mood."
 
 ![Idea 1 variation 1](sample_generations/idea_1_v1.png)
 
-**Idea 2** — "Elevate Your Every Run. Literally."
+**Idea 2** — "Out of This World Run."
 
 ![Idea 2 variation 1](sample_generations/idea_2_v1.png)
 
-**Idea 3** — "Dawn of a New Dimension: Your Marathon Awaits."
+**Idea 3** — "Leap into the Laps of Joy."
 
 | Variation 1 | Variation 2 |
 |---|---|
