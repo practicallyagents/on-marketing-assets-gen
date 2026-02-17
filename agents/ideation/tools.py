@@ -1,6 +1,8 @@
 """Tools for the Ideation agent."""
 
+import glob
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -8,17 +10,130 @@ from google.adk.tools import ToolContext
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 PRODUCT_INDEX_PATH = PROJECT_ROOT / "data" / "product_index.json"
+PRODUCTS_DIR = PROJECT_ROOT / "data" / "products"
+COLLECTIONS_DIR = PROJECT_ROOT / "data" / "collections"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 
-_product_index_cache: dict | None = None
+_sku_index_cache: dict[str, str] | None = None
+_products_cache: list[dict] | None = None
 
 
-def _load_product_index() -> dict:
-    global _product_index_cache
-    if _product_index_cache is None:
+def _load_sku_index() -> dict[str, str]:
+    """Load the SKU → file path index."""
+    global _sku_index_cache
+    if _sku_index_cache is None:
         with open(PRODUCT_INDEX_PATH) as f:
-            _product_index_cache = json.load(f)
-    return _product_index_cache
+            _sku_index_cache = json.load(f)
+    return _sku_index_cache
+
+
+def _extract_category_from_url(url: str) -> str:
+    """Infer category (shoes/apparel/accessories) from URL."""
+    url_lower = url.lower()
+    if "shoes" in url_lower:
+        return "shoes"
+    elif "apparel" in url_lower:
+        return "apparel"
+    elif "accessories" in url_lower:
+        return "accessories"
+    return "other"
+
+
+def _extract_products_from_file(filepath: str) -> list[dict]:
+    """Extract product variants from a single product file."""
+    with open(filepath) as f:
+        data = json.load(f)
+
+    products = []
+    json_ld = data.get("structuredData", {}).get("jsonLd", [])
+
+    for ld in json_ld:
+        graph = ld.get("@graph", [])
+        for node in graph:
+            groups = []
+            if node.get("@type") == "ProductGroup":
+                groups.append(node)
+            elif node.get("@type") == "ItemList":
+                for list_item in node.get("itemListElement", []):
+                    item = list_item.get("item", {})
+                    if item.get("@type") == "ProductGroup":
+                        groups.append(item)
+
+            for group in groups:
+                group_name = group.get("name", "")
+                group_desc = group.get("description", "")
+                group_url = group.get("url", "")
+
+                for variant in group.get("hasVariant", []):
+                    sku = variant.get("sku", "")
+                    if not sku:
+                        continue
+                    offers = variant.get("offers", {})
+                    product_url = offers.get("url", group_url)
+                    products.append({
+                        "name": variant.get("name", ""),
+                        "sku": sku,
+                        "product_group": group_name,
+                        "description": group_desc,
+                        "color": variant.get("color", ""),
+                        "price": offers.get("price"),
+                        "image_url": variant.get("image", ""),
+                        "product_url": product_url,
+                        "category": _extract_category_from_url(product_url),
+                    })
+
+    # Fallback: if no structured data, try content fields
+    if not products:
+        url = data.get("url", "")
+        content = data.get("content", {})
+        name = content.get("name", "")
+        if name and name != "Shop all":
+            match = re.search(r"-([A-Z0-9]{5,})$", url.rstrip("/").split("/")[-1], re.IGNORECASE)
+            sku = match.group(1) if match else ""
+            if sku:
+                price = None
+                sku_field = content.get("sku", "")
+                price_match = re.search(r"\$(\d+(?:\.\d{2})?)", sku_field)
+                if price_match:
+                    price = float(price_match.group(1))
+
+                products.append({
+                    "name": name,
+                    "sku": sku,
+                    "product_group": "",
+                    "description": "",
+                    "color": "",
+                    "price": price,
+                    "image_url": "",
+                    "product_url": url,
+                    "category": _extract_category_from_url(url),
+                })
+
+    return products
+
+
+def _load_all_products() -> list[dict]:
+    """Load and cache all product data from product files."""
+    global _products_cache
+    if _products_cache is not None:
+        return _products_cache
+
+    sku_index = _load_sku_index()
+    # Get unique file paths from the index
+    unique_paths = set(sku_index.values())
+
+    all_products: list[dict] = []
+    seen_skus: set[str] = set()
+
+    for rel_path in sorted(unique_paths):
+        filepath = str(PROJECT_ROOT / rel_path)
+        for product in _extract_products_from_file(filepath):
+            if product["sku"] not in seen_skus:
+                seen_skus.add(product["sku"])
+                all_products.append(product)
+
+    _products_cache = all_products
+    return _products_cache
 
 
 def read_mood_board(path: str) -> str:
@@ -36,7 +151,7 @@ def read_mood_board(path: str) -> str:
 
 
 def search_products(query: str) -> str:
-    """Searches the product index by keyword and returns matching products.
+    """Searches the product catalog by keyword and returns matching products.
 
     Use this to find specific products from the On catalog that match the
     mood board's themes or product requirements. Search by product name,
@@ -48,12 +163,12 @@ def search_products(query: str) -> str:
     Returns:
         JSON string with matching products (max 20 results).
     """
-    index = _load_product_index()
+    products = _load_all_products()
     query_lower = query.lower()
     keywords = query_lower.split()
 
     matches = []
-    for product in index["products"]:
+    for product in products:
         searchable = " ".join([
             product.get("name", ""),
             product.get("product_group", ""),
@@ -63,17 +178,7 @@ def search_products(query: str) -> str:
         ]).lower()
 
         if all(kw in searchable for kw in keywords):
-            matches.append({
-                "name": product["name"],
-                "sku": product["sku"],
-                "product_group": product.get("product_group", ""),
-                "description": product.get("description", ""),
-                "color": product.get("color", ""),
-                "price": product.get("price"),
-                "image_url": product.get("image_url", ""),
-                "product_url": product.get("product_url", ""),
-                "category": product.get("category", ""),
-            })
+            matches.append(product)
 
         if len(matches) >= 20:
             break
@@ -85,14 +190,28 @@ def search_products(query: str) -> str:
     }
 
     if not matches:
-        # Also include collection info for context
-        matching_collections = [
-            c for c in index.get("collections", [])
-            if query_lower in c.get("name", "").lower()
-            or query_lower in c.get("description", "").lower()
-        ]
+        # Search collection files directly for context
+        matching_collections = []
+        collection_files = sorted(glob.glob(str(COLLECTIONS_DIR / "*.json")))
+        for cpath in collection_files:
+            with open(cpath) as f:
+                cdata = json.load(f)
+            metadata = cdata.get("metadata", {})
+            og = metadata.get("openGraph", {})
+            content = cdata.get("content", {})
+            title = content.get("title") or og.get("og:title") or metadata.get("title", "")
+            description = og.get("og:description") or metadata.get("description", "")
+            if query_lower in title.lower() or query_lower in description.lower():
+                matching_collections.append({
+                    "name": title,
+                    "description": description,
+                    "url": cdata.get("url", ""),
+                    "image_url": og.get("og:image", ""),
+                })
+            if len(matching_collections) >= 5:
+                break
         if matching_collections:
-            result["related_collections"] = matching_collections[:5]
+            result["related_collections"] = matching_collections
 
     return json.dumps(result, indent=2)
 
