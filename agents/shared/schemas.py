@@ -7,7 +7,7 @@ class PostIdea(BaseModel):
     id: str
     product_name: str
     product_sku: str
-    product_image_url: str
+    product_image_urls: list[str]
     imagery_direction: str
     headline: str
     post_description: str

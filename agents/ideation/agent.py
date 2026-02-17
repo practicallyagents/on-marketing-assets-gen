@@ -2,7 +2,7 @@
 
 from google.adk.agents import LlmAgent, SequentialAgent
 
-from agents.ideation.tools import read_mood_board, search_products, save_ideas
+from agents.ideation.tools import read_mood_board, search_products, get_product_details, save_ideas
 
 # --- Step 1: Read the mood board ---
 
@@ -29,12 +29,10 @@ products from the On catalog that match a mood board.
 The mood board content is available in the session state:
 {mood_board_content}
 
-Analyze the mood board's themes, products, and visual direction. Then use
-`search_products` to find matching products. Run **at least 3 different searches**
-using varied keywords (product names, categories, colors, activity types).
+Follow these steps:
 
-After searching, compile a final summary listing every unique product you found,
-including name, SKU, image URL, color, and price.
+Scan the mood board for any SKU codes (alphanumeric
+codes like "1WE30701756"). If you find any return an array of SKU codes.
 """
 
 product_searcher = LlmAgent(
@@ -42,7 +40,7 @@ product_searcher = LlmAgent(
     model="gemini-2.5-flash",
     description="Searches the On product catalog for products matching the mood board.",
     instruction=PRODUCT_SEARCHER_INSTRUCTION,
-    tools=[search_products],
+    tools=[search_products, get_product_details],
     output_key="product_search_results",
 )
 
@@ -55,7 +53,7 @@ Generate exactly 3 Instagram post ideas based on the mood board and product sear
 Mood board:
 {mood_board_content}
 
-Available products:
+Available product SKU codes:
 {product_search_results}
 
 Each idea must:
@@ -66,7 +64,7 @@ Each idea must:
 
 Guidelines:
 - Match the mood board's tone and visual direction
-- Select products that align with the campaign theme
+- Use available product SKUs (use get_product_details tool to get product details)
 - Write captions in On's brand voice: confident, clean, aspirational, athletic
 - Make imagery directions specific enough to guide image generation
 - Use real product data (names, SKUs, image URLs) from the search results
@@ -79,7 +77,7 @@ Return your output as a valid JSON object with this exact structure:
       "id": "idea_1",
       "product_name": "...",
       "product_sku": "...",
-      "product_image_url": "...",
+      "product_image_urls": ["...", "...", "..."],
       "imagery_direction": "...",
       "headline": "...",
       "post_description": "...",
