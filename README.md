@@ -45,14 +45,14 @@ You can run the pipeline in two ways:
 **CLI (non-interactive)** — pass a mood board file directly:
 
 ```bash
-make run-file FILE=mood_boards/sample_mood_board.md
+make run-file FILE=mood_boards/pants.md
 ```
 
 **Interactive mode** — start the agent and tell it which mood board to use:
 
 ```bash
 make run
-# Then type: Generate Instagram posts from mood_boards/sample_mood_board.md
+# Then type: Generate Instagram posts from mood_boards/pants.md
 ```
 
 The pipeline will:
@@ -63,22 +63,16 @@ The pipeline will:
 
 ## Creating mood boards
 
-Add markdown files to `mood_boards/`. Structure:
+Add markdown files to `mood_boards/`. Mood boards **must include product SKU references** so the ideation agent can look up the correct products from the catalog. See `mood_boards/pants.md` for an example.
+
+Structure:
 
 ```markdown
 # Campaign Name
 
-## Theme
-What the campaign is about
+Campaign description, creative direction, and any constraints.
 
-## Products to Consider
-- Specific products or categories
-
-## Visual Direction
-- Lighting, settings, composition notes
-
-## Tone
-The feeling / brand voice for this campaign
+The product SKUs: [1WE30701756, 1WD10570462, 1WF11290069]
 ```
 
 ## Project structure
