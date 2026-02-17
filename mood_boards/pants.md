@@ -1,16 +1,22 @@
-# Campaing for marathon campain
+# Zurich Marathon 2026 Campaign
 
-Let's make a campaign for upcomming Zurich Marathon 2026.
+## Theme
 
-I want some happy vibes, no matter of gear you can have fun!
-Go nuts, make the images crazy, unpredictable, thought provoking!
+A joyful, high-energy campaign for the upcoming Zurich Marathon 2026. The core message: no matter what gear you're wearing, running is fun. Every image should radiate **movement and athleticism** — people mid-stride, sprinting, pushing through the last kilometer. Show the sweat, the grit, the runner's high. Embrace the absurd — these posts should feel crazy, unpredictable, and thought-provoking.
 
-Keywords to include in the ideas: space, finish line, UFO.
+## Products to Consider
 
-All ideas have to be life situations or street race.
-All images have to include a dog and coffee.
-All images scenes MUST be lifestle photos.
+SKUs: 1WE30701756, 1WD10570462, 1WF11290069
 
-Make sure to use characters, gear found on product images.
+Use the characters, apparel, and gear visible in the product images as direct references for the generated visuals.
 
-The product SKUs: [1WE30701756, 1WD10570462, 1WF11290069]
+## Visual Direction
+
+- Every scene must be a **lifestyle photo** — real-life situations or street race moments, with subjects **actively running or in motion**
+- Every image must include a **dog** and **coffee** somewhere in the frame
+- Weave in these keywords as visual or conceptual motifs: **space**, **finish line**, **UFO**
+- Go for surreal, playful compositions that stop the scroll
+
+## Tone
+
+Happy, energetic, irreverent. The vibe is "marathon morning meets cosmic chaos." Lean into humor and surprise while keeping it aspirational and on-brand for On. Above all, celebrate the joy of **being active** — the freedom of lacing up and hitting the road.
