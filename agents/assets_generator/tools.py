@@ -28,6 +28,59 @@ def load_ideas(tool_context: ToolContext) -> str:
         return f.read()
 
 
+def save_image_prompts(prompts_json: str, tool_context: ToolContext) -> str:
+    """Saves the list of image generation prompts to shared state.
+
+    Args:
+        prompts_json: JSON string containing a list of prompt objects.
+            Each object must have: idea_id (str), version (int), prompt (str).
+        tool_context: ADK tool context for state access.
+
+    Returns:
+        Confirmation message.
+    """
+    from agents.shared.schemas import STATE_KEY_IMAGE_PROMPTS
+
+    prompts = json.loads(prompts_json)
+    if not isinstance(prompts, list) or not prompts:
+        return "Error: prompts_json must be a non-empty JSON array."
+
+    for entry in prompts:
+        if not all(k in entry for k in ("idea_id", "version", "prompt")):
+            return "Error: each prompt entry must have idea_id, version, and prompt."
+
+    tool_context.state[STATE_KEY_IMAGE_PROMPTS] = prompts
+    return f"Saved {len(prompts)} image prompts to state."
+
+
+def save_all_assets(tool_context: ToolContext) -> str:
+    """Reads generated image results from state and saves them all to disk.
+
+    Returns:
+        Summary of saved files.
+    """
+    from agents.shared.schemas import STATE_KEY_IMAGE_RESULTS
+
+    results = tool_context.state.get(STATE_KEY_IMAGE_RESULTS)
+    if not results:
+        return "Error: no image results found in state."
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    saved = []
+    for entry in results:
+        idea_id = entry["idea_id"]
+        version = entry["version"]
+        image_b64 = entry["image_base64"]
+        filename = f"{idea_id}_v{version}.png"
+        output_path = OUTPUT_DIR / filename
+        image_bytes = base64.b64decode(image_b64)
+        with open(output_path, "wb") as f:
+            f.write(image_bytes)
+        saved.append(f"{filename} ({len(image_bytes)} bytes)")
+
+    return f"Saved {len(saved)} images: {', '.join(saved)}"
+
+
 def save_asset(image_base64: str, idea_id: str, version: int) -> str:
     """Saves a generated image asset to the output directory.
 

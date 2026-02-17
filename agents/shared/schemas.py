@@ -21,3 +21,5 @@ class IdeasOutput(BaseModel):
 
 
 STATE_KEY_IDEAS = "ideas_output"
+STATE_KEY_IMAGE_PROMPTS = "image_prompts"
+STATE_KEY_IMAGE_RESULTS = "image_results"

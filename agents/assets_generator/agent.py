@@ -1,46 +1,81 @@
-"""Assets Generator agent definition."""
+"""Assets Generator agent definition — sequential pipeline."""
 
-from google.adk.agents import LlmAgent
+from google.adk.agents import LlmAgent, SequentialAgent
 
-from agents.assets_generator.tools import load_ideas, save_asset
+from agents.assets_generator.callbacks import extract_images_to_state
+from agents.assets_generator.tools import (
+    load_ideas,
+    save_all_assets,
+    save_image_prompts,
+)
 
-INSTRUCTION = """You are a visual designer for On, the Swiss running and athletic brand.
-Your job is to generate Instagram post images based on the post ideas from the ideation agent.
+PROMPT_GENERATOR_INSTRUCTION = """\
+You are a visual designer for On, the Swiss running and athletic brand.
+Your job is to create detailed image generation prompts for Instagram posts.
 
 ## Your workflow:
 
-1. Use `load_ideas` to retrieve the post ideas from the previous ideation step.
-2. For each of the 3 post ideas, generate 3 visual variations as Instagram post images.
-   That means 9 images total (3 ideas x 3 versions each).
-3. For each image, use the idea's imagery_direction and mood to craft a detailed image prompt.
-4. Generate each image directly using your native image generation capability.
-   Simply describe the image you want to create in detail and the image will be generated.
-5. After generating each image, use `save_asset` to save it. Pass the base64-encoded image
-   data, the idea ID, and the version number (1, 2, or 3).
-
-## Image generation guidelines:
-- Create images at 1080x1080 (square Instagram format)
-- Match On's brand aesthetic: clean, minimal, athletic, premium
-- Use the product's actual appearance as reference (check the product_image_url)
-- Each of the 3 variations should differ meaningfully:
-  - Version 1: Product-focused hero shot
-  - Version 2: Lifestyle/action shot with the product
-  - Version 3: Artistic/mood-driven composition
-- Include the headline text overlaid on the image when appropriate
-- Use On's brand colors: black, white, and accent colors from the product
-
-## Brand aesthetic reference:
-- Clean lines, lots of whitespace
-- Natural lighting, outdoor/urban settings
-- Athletic yet sophisticated
-- Swiss precision and quality feel
+1. Use `load_ideas` to retrieve the post ideas from the ideation step.
+2. For each of the 3 post ideas, craft 3 detailed image generation prompts (9 total).
+   - Version 1: Product-focused hero shot
+   - Version 2: Lifestyle/action shot with the product
+   - Version 3: Artistic/mood-driven composition
+3. Each prompt should describe the image in detail, referencing:
+   - The product's appearance and key features
+   - On's brand aesthetic: clean, minimal, athletic, premium
+   - The idea's imagery_direction and mood
+   - Square 1080x1080 Instagram format
+   - On brand colors: black, white, and accent colors from the product
+   - Natural lighting, outdoor/urban settings
+4. Use `save_image_prompts` to save all 9 prompts as a JSON array.
+   Each entry must have: idea_id (str), version (int 1-3), prompt (str).
 """
 
-assets_generator_agent = LlmAgent(
-    name="assets_generator_agent",
+IMAGE_GENERATOR_INSTRUCTION = """\
+You are an image generator. Generate one image for each of the prompts below.
+Generate all images in a single response. Each image should be square (1080x1080).
+
+## Prompts:
+
+{image_prompts}
+"""
+
+ASSET_SAVER_INSTRUCTION = """\
+You are a file manager. Your job is to save generated images to disk.
+
+Call `save_all_assets` to save all the generated images from state to the output directory.
+Report the results when done.
+"""
+
+prompt_generator_agent = LlmAgent(
+    name="prompt_generator_agent",
+    model="gemini-2.5-flash",
+    description="Creates detailed image generation prompts from post ideas.",
+    instruction=PROMPT_GENERATOR_INSTRUCTION,
+    tools=[load_ideas, save_image_prompts],
+)
+
+image_generator_agent = LlmAgent(
+    name="image_generator_agent",
     model="gemini-2.5-flash-image",
+    description="Generates images from prompts using native image generation.",
+    instruction=IMAGE_GENERATOR_INSTRUCTION,
+    tools=[],
+    include_contents="none",
+    after_model_callback=extract_images_to_state,
+)
+
+asset_saver_agent = LlmAgent(
+    name="asset_saver_agent",
+    model="gemini-2.5-flash",
+    description="Saves generated image assets to disk.",
+    instruction=ASSET_SAVER_INSTRUCTION,
+    tools=[save_all_assets],
+    include_contents="none",
+)
+
+assets_generator_agent = SequentialAgent(
+    name="assets_generator_agent",
     description="Visual designer that generates Instagram post images based on post ideas.",
-    instruction=INSTRUCTION,
-    tools=[load_ideas, save_asset],
-    output_key="assets_output",
+    sub_agents=[prompt_generator_agent, image_generator_agent, asset_saver_agent],
 )
